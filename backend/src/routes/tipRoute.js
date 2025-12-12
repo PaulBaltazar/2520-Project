@@ -2,6 +2,19 @@ import { once } from "node:events";
 import { DEFAULT_HEADER, getUserFromRequest } from "../util/util.js";
 import { readDb } from "../../database/database.js";
 
+async function getJsonBody(req) {
+  let data = "";
+
+  req.on("data", (chunk) => {
+    data += chunk;
+  });
+
+  await once(req, "end");
+
+  if (!data) return {};
+  return JSON.parse(data);
+}
+
 function tipRoutes({ tipService, authService }) {
   return {
     "/tips:get": async (req, res) => {
@@ -34,8 +47,14 @@ function tipRoutes({ tipService, authService }) {
       const user = getUserFromRequest(req, res);
       if (!user) return;
 
-      const [rawBody] = await once(req, "data");
-      const body = JSON.parse(rawBody || "{}");
+      let body = {};
+      try {
+        body = await getJsonBody(req);
+      } catch {
+        res.writeHead(400, DEFAULT_HEADER);
+        return res.end(JSON.stringify({ error: "Invalid JSON body" }));
+      }
+
       const { title } = body;
 
       if (!title) {
@@ -61,8 +80,14 @@ function tipRoutes({ tipService, authService }) {
       const user = getUserFromRequest(req, res);
       if (!user) return;
 
-      const [rawBody] = await once(req, "data");
-      const body = JSON.parse(rawBody || "{}");
+      let body = {};
+      try {
+        body = await getJsonBody(req);
+      } catch {
+        res.writeHead(400, DEFAULT_HEADER);
+        return res.end(JSON.stringify({ error: "Invalid JSON body" }));
+      }
+
       const { id, title } = body;
 
       if (!id || !title) {
@@ -89,8 +114,14 @@ function tipRoutes({ tipService, authService }) {
       const user = getUserFromRequest(req, res);
       if (!user) return;
 
-      const [rawBody] = await once(req, "data");
-      const body = JSON.parse(rawBody || "{}");
+      let body = {};
+      try {
+        body = await getJsonBody(req);
+      } catch {
+        res.writeHead(400, DEFAULT_HEADER);
+        return res.end(JSON.stringify({ error: "Invalid JSON body" }));
+      }
+
       const { id } = body;
 
       if (!id) {
